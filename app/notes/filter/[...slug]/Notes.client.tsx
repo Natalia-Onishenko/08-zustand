@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "use-debounce";
 import { useQuery } from "@tanstack/react-query";
@@ -11,8 +12,6 @@ import type { NoteTag } from "../../../../types/note";
 import SearchBox from "../../../../components/SearchBox/SearchBox";
 import Pagination from "../../../../components/Pagination/Pagination";
 import NoteList from "../../../../components/NoteList/NoteList";
-import Modal from "../../../../components/Modal/Modal";
-import NoteForm from "../../../../components/NoteForm/NoteForm";
 
 import css from "./NotesPage.module.css";
 
@@ -25,14 +24,12 @@ export default function NotesClient() {
   const searchParams = useSearchParams();
   const params = useParams<Params>();
 
-  // -------- TAG from URL (/notes/filter/{tag} or /notes/filter/all) ----------
   const rawTag = params?.slug?.[0] ?? "all";
   const decodedTag = decodeURIComponent(rawTag);
 
   const tagForApi: NoteTag | undefined =
     decodedTag === "all" ? undefined : (decodedTag as NoteTag);
 
-  // -------- LOCAL STATE (page/search/modal) ----------
   const initialPage = Number(searchParams.get("page") ?? "1");
   const initialSearch = searchParams.get("search") ?? "";
 
@@ -42,9 +39,6 @@ export default function NotesClient() {
   const [searchValue, setSearchValue] = useState<string>(initialSearch);
   const [debouncedSearch] = useDebounce(searchValue, 400);
 
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-
-  // -------- Sync URL when search changes (debounced) + reset page to 1 ----------
   useEffect(() => {
     const next = new URLSearchParams(searchParams.toString());
 
@@ -54,20 +48,22 @@ export default function NotesClient() {
     next.set("page", "1");
     setPage(1);
 
-    router.push(`/notes/filter/${encodeURIComponent(decodedTag)}?${next.toString()}`);
+    router.push(
+      `/notes/filter/${encodeURIComponent(decodedTag)}?${next.toString()}`
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, decodedTag]);
 
-  // -------- Sync URL when page changes ----------
   useEffect(() => {
     const next = new URLSearchParams(searchParams.toString());
     next.set("page", String(page));
 
-    router.push(`/notes/filter/${encodeURIComponent(decodedTag)}?${next.toString()}`);
+    router.push(
+      `/notes/filter/${encodeURIComponent(decodedTag)}?${next.toString()}`
+    );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  // -------- DATA ----------
   const queryKey = useMemo(
     () => ["notes", { page, search: debouncedSearch, tag: decodedTag }],
     [page, debouncedSearch, decodedTag]
@@ -85,13 +81,9 @@ export default function NotesClient() {
     placeholderData: (prev) => prev,
   });
 
-  // -------- HANDLERS ----------
   const handlePageChange = (selected: number) => {
     setPage(selected + 1);
   };
-
-  const openCreate = () => setIsCreateOpen(true);
-  const closeCreate = () => setIsCreateOpen(false);
 
   if (isLoading) return <p>Loading, please wait...</p>;
   if (isError || !data) return <p>Something went wrong.</p>;
@@ -101,9 +93,9 @@ export default function NotesClient() {
       <div className={css.toolbar}>
         <SearchBox value={searchValue} onChange={setSearchValue} />
 
-        <button type="button" className={css.button} onClick={openCreate}>
+        <Link href="/notes/action/create" className={css.button}>
           Create note
-        </button>
+        </Link>
       </div>
 
       <Pagination
@@ -113,12 +105,6 @@ export default function NotesClient() {
       />
 
       <NoteList notes={data.notes} />
-
-      {isCreateOpen && (
-        <Modal onClose={closeCreate}>
-          <NoteForm onCancel={closeCreate} />
-        </Modal>
-      )}
     </div>
   );
 }
