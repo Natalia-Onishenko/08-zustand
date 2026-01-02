@@ -1,16 +1,28 @@
 import type { Metadata } from "next";
+
 import NoteForm from "../../../../components/NoteForm/NoteForm";
 import css from "./CreateNote.module.css";
 
+import { getSiteUrl, OG_IMAGE } from "../../../../lib/seo/site";
+
+const PATH = "/notes/action/create";
+
+function absUrl(path: string) {
+  return new URL(path, getSiteUrl()).toString();
+}
+
 export const metadata: Metadata = {
-  title: "NoteHub | Create note",
+  title: "Create note | NoteHub",
   description: "Create a new note in NoteHub.",
-  alternates: { canonical: "/notes/action/create" },
+  alternates: {
+    canonical: absUrl(PATH),
+  },
   openGraph: {
-    title: "NoteHub | Create note",
+    title: "Create note | NoteHub",
     description: "Create a new note in NoteHub.",
-    url: "/notes/action/create",
-    images: ["https://ac.goit.global/fullstack/react/notehub-og-meta.jpg"],
+    url: absUrl(PATH),
+    images: [OG_IMAGE],
+    type: "website",
   },
 };
 

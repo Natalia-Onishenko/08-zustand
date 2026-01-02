@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useDebounce } from "use-debounce";
 import { useQuery } from "@tanstack/react-query";
 
@@ -15,20 +15,16 @@ import NoteList from "../../../../components/NoteList/NoteList";
 
 import css from "./NotesPage.module.css";
 
-type Params = {
-  slug?: string[];
+type Props = {
+  tagFromUrl: string; 
 };
 
-export default function NotesClient() {
+export default function NotesClient({ tagFromUrl }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const params = useParams<Params>();
-
-  const rawTag = params?.slug?.[0] ?? "all";
-  const decodedTag = decodeURIComponent(rawTag);
 
   const tagForApi: NoteTag | undefined =
-    decodedTag === "all" ? undefined : (decodedTag as NoteTag);
+    tagFromUrl === "all" ? undefined : (tagFromUrl as NoteTag);
 
   const initialPage = Number(searchParams.get("page") ?? "1");
   const initialSearch = searchParams.get("search") ?? "";
@@ -39,6 +35,7 @@ export default function NotesClient() {
   const [searchValue, setSearchValue] = useState<string>(initialSearch);
   const [debouncedSearch] = useDebounce(searchValue, 400);
 
+  
   useEffect(() => {
     const next = new URLSearchParams(searchParams.toString());
 
@@ -49,24 +46,25 @@ export default function NotesClient() {
     setPage(1);
 
     router.push(
-      `/notes/filter/${encodeURIComponent(decodedTag)}?${next.toString()}`
+      `/notes/filter/${encodeURIComponent(tagFromUrl)}?${next.toString()}`
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, decodedTag]);
+  }, [debouncedSearch, tagFromUrl]);
 
+  // --- sync URL when page changes ---
   useEffect(() => {
     const next = new URLSearchParams(searchParams.toString());
     next.set("page", String(page));
 
     router.push(
-      `/notes/filter/${encodeURIComponent(decodedTag)}?${next.toString()}`
+      `/notes/filter/${encodeURIComponent(tagFromUrl)}?${next.toString()}`
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
   const queryKey = useMemo(
-    () => ["notes", { page, search: debouncedSearch, tag: decodedTag }],
-    [page, debouncedSearch, decodedTag]
+    () => ["notes", { page, search: debouncedSearch, tag: tagFromUrl }],
+    [page, debouncedSearch, tagFromUrl]
   );
 
   const { data, isLoading, isError } = useQuery<FetchNotesResponse>({
@@ -81,9 +79,7 @@ export default function NotesClient() {
     placeholderData: (prev) => prev,
   });
 
-  const handlePageChange = (selected: number) => {
-    setPage(selected + 1);
-  };
+  const handlePageChange = (selected: number) => setPage(selected + 1);
 
   if (isLoading) return <p>Loading, please wait...</p>;
   if (isError || !data) return <p>Something went wrong.</p>;
