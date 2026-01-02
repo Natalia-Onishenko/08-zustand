@@ -16,7 +16,7 @@ import NoteList from "../../../../components/NoteList/NoteList";
 import css from "./NotesPage.module.css";
 
 type Props = {
-  tagFromUrl: string; 
+  tagFromUrl: string;
 };
 
 export default function NotesClient({ tagFromUrl }: Props) {
@@ -35,7 +35,6 @@ export default function NotesClient({ tagFromUrl }: Props) {
   const [searchValue, setSearchValue] = useState<string>(initialSearch);
   const [debouncedSearch] = useDebounce(searchValue, 400);
 
-  
   useEffect(() => {
     const next = new URLSearchParams(searchParams.toString());
 
@@ -51,7 +50,6 @@ export default function NotesClient({ tagFromUrl }: Props) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, tagFromUrl]);
 
-  // --- sync URL when page changes ---
   useEffect(() => {
     const next = new URLSearchParams(searchParams.toString());
     next.set("page", String(page));
@@ -59,7 +57,7 @@ export default function NotesClient({ tagFromUrl }: Props) {
     router.push(
       `/notes/filter/${encodeURIComponent(tagFromUrl)}?${next.toString()}`
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [page]);
 
   const queryKey = useMemo(
@@ -100,7 +98,11 @@ export default function NotesClient({ tagFromUrl }: Props) {
         onPageChange={handlePageChange}
       />
 
-      <NoteList notes={data.notes} />
+      {data.notes.length === 0 ? (
+        <p>No notes found</p>
+      ) : (
+        <NoteList notes={data.notes} />
+      )}
     </div>
   );
 }
