@@ -24,10 +24,19 @@ export async function generateMetadata({
   const resolvedParams = await params;
   const tag = decodeTagFromSlug(resolvedParams.slug);
 
+  const title = tag === "all" ? "Notes | NoteHub" : `Notes: ${tag} | NoteHub`;
+  const description =
+    tag === "all" ? "Browse your notes" : `Notes filtered by tag: ${tag}`;
+
   return {
-    title: tag === "all" ? "Notes | NoteHub" : `Notes: ${tag} | NoteHub`,
-    description:
-      tag === "all" ? "Browse your notes" : `Notes filtered by tag: ${tag}`,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: tag === "all" ? "/notes" : `/notes/filter/${encodeURIComponent(tag)}`,
+      images: ["/og-image.png"],
+    },
   };
 }
 
